@@ -1,7 +1,9 @@
+import 'package:exam/bloc/home_state.dart';
 import 'package:exam/models/article_model.dart';
 import 'package:flutter/material.dart';
-
-import '../services/http_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/home_bloc.dart';
+import '../bloc/home_event.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,44 +13,42 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool isLoading = true;
-  List<Article> articles = [];
-
-  _loadArticles() async {
-    var response =
-        await Network.GET(Network.API_GET_INFOS, Network.paramsArticle());
-    List<Article> articlesList = Network.parseArticles(response!);
-    print(articlesList.length);
-    setState(() {
-      articles = articlesList;
-    });
-  }
+  late HomeBloc homeBloc;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _loadArticles();
+    homeBloc = BlocProvider.of<HomeBloc>(context);
+    homeBloc.add(LoadArticlesListEvent());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-      ),
-      body: Stack(
-        children: [
-          ListView.builder(
-            itemCount: articles.length,
-            itemBuilder: (context, index) {
-              return itemOfArticle(articles[index], index);
-            },
-          )
-        ],
-      ),
-    );
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          centerTitle: true,
+          backgroundColor: Colors.grey[300],
+          title: Text(
+            'All articles about Tesla',
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+        body: BlocBuilder<HomeBloc, HomeState>(
+          builder: (context, state) {
+            return Stack(
+              children: [
+                ListView.builder(
+                  itemCount: homeBloc.articles.length,
+                  itemBuilder: (context, index) {
+                    return itemOfArticle(homeBloc.articles[index], index);
+                  },
+                )
+              ],
+            );
+          },
+        ));
   }
 
   Widget itemOfArticle(Article article, int index) {
@@ -63,9 +63,8 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
-              borderRadius: BorderRadius.circular(20)
-            ),
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(20)),
             child: Column(
               children: [
                 Container(
